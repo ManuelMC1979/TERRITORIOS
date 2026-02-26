@@ -1,0 +1,1032 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Base de Datos — Territorios Loncomilla</title>
+    <style>
+        :root {
+            --navy: #0f2444;
+            --navy-light: #1a3a5c;
+            --blue: #2563eb;
+            --blue-light: #3b82f6;
+            --teal: #0d9488;
+            --green: #16a34a;
+            --red: #dc2626;
+            --amber: #d97706;
+            --gray-50: #f8fafc;
+            --gray-100: #f1f5f9;
+            --gray-200: #e2e8f0;
+            --gray-400: #94a3b8;
+            --gray-600: #475569;
+            --gray-800: #1e293b;
+            --white: #ffffff;
+            --radius: 10px;
+            --radius-sm: 6px;
+            --shadow-sm: 0 1px 3px rgba(0,0,0,0.10);
+            --shadow-md: 0 4px 12px rgba(0,0,0,0.08);
+            --shadow-lg: 0 10px 30px rgba(0,0,0,0.14);
+            --shadow-xl: 0 20px 50px rgba(0,0,0,0.18);
+        }
+        * { margin:0; padding:0; box-sizing:border-box; }
+
+        body {
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+            background: #0a1628;
+            min-height: 100vh;
+            color: var(--gray-800);
+            display: flex;
+            overflow: hidden;
+        }
+
+        /* ══ SIDEBAR ══ */
+        .sidebar {
+            width: 230px; min-width: 230px;
+            background: var(--navy);
+            display: flex; flex-direction: column;
+            height: 100vh; overflow: hidden;
+            box-shadow: 4px 0 20px rgba(0,0,0,0.35);
+            flex-shrink: 0;
+        }
+        .sidebar-brand {
+            padding: 18px 16px 14px;
+            border-bottom: 1px solid rgba(255,255,255,0.08);
+            display: flex; align-items: center; gap: 10px;
+        }
+        .brand-icon {
+            width: 36px; height: 36px;
+            background: linear-gradient(135deg, var(--blue), var(--teal));
+            border-radius: 8px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 1.1em; flex-shrink: 0;
+        }
+        .brand-texts .brand-title {
+            color: white; font-size: 0.82em; font-weight: 700;
+            letter-spacing: 0.4px; text-transform: uppercase;
+        }
+        .brand-texts .brand-sub { color: rgba(255,255,255,0.4); font-size: 0.68em; }
+
+        .sidebar-search {
+            padding: 12px 12px 8px;
+            position: relative;
+        }
+        .sidebar-search input {
+            width: 100%;
+            padding: 8px 10px 8px 30px;
+            background: rgba(255,255,255,0.09);
+            border: 1px solid rgba(255,255,255,0.12);
+            border-radius: 7px; color: white; font-size: 0.82em; outline: none;
+        }
+        .sidebar-search input::placeholder { color: rgba(255,255,255,0.35); }
+        .sidebar-search input:focus { border-color: rgba(59,130,246,0.5); background: rgba(255,255,255,0.12); }
+        .sidebar-search .s-icon {
+            position: absolute; left: 22px; top: 50%; transform: translateY(-50%);
+            color: rgba(255,255,255,0.4); font-size: 0.8em; pointer-events: none;
+        }
+
+        .terr-list { flex: 1; overflow-y: auto; padding: 0 8px 12px; }
+        .terr-list::-webkit-scrollbar { width: 3px; }
+        .terr-list::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.12); border-radius: 3px; }
+
+        .terr-item {
+            display: flex; align-items: center; gap: 9px;
+            padding: 8px 10px;
+            border-radius: var(--radius-sm);
+            cursor: pointer;
+            transition: background 0.13s;
+            border: none; background: transparent; width: 100%; text-align: left;
+            margin-bottom: 1px;
+        }
+        .terr-item:hover { background: rgba(255,255,255,0.07); }
+        .terr-item.active { background: rgba(37,99,235,0.25); }
+
+        .terr-num {
+            width: 28px; height: 28px; border-radius: 6px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 0.75em; font-weight: 800; flex-shrink: 0;
+        }
+        .terr-info { flex: 1; min-width: 0; }
+        .terr-info .t-name {
+            font-size: 0.78em; color: rgba(255,255,255,0.82);
+            white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+        }
+        .terr-info .t-count { font-size: 0.66em; color: rgba(255,255,255,0.38); }
+        .terr-dot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
+
+        .sidebar-footer {
+            padding: 12px;
+            border-top: 1px solid rgba(255,255,255,0.08);
+        }
+
+
+        #clock {
+            background: rgba(255,255,255,0.05);
+            border: 1px solid rgba(255,255,255,0.08);
+            color: rgba(255,255,255,0.5);
+            padding: 7px 10px; border-radius: var(--radius-sm);
+            font-size: 0.72em; text-align: center; margin-bottom: 8px;
+        }
+
+        /* ══ MAIN ══ */
+        .main {
+            flex: 1; display: flex; flex-direction: column;
+            height: 100vh; overflow: hidden;
+            background: var(--gray-50);
+        }
+
+        .main-hdr {
+            background: white;
+            border-bottom: 1px solid var(--gray-200);
+            padding: 14px 24px;
+            display: flex; align-items: center; justify-content: space-between;
+            flex-shrink: 0;
+            box-shadow: var(--shadow-sm);
+        }
+        .main-hdr-left h2 { font-size: 1.1em; font-weight: 700; color: var(--gray-800); }
+        .main-hdr-left p { font-size: 0.78em; color: var(--gray-400); margin-top: 1px; }
+
+        .hdr-actions { display: flex; gap: 8px; align-items: center; }
+
+        .btn-add {
+            padding: 8px 16px;
+            background: var(--blue); color: white;
+            border: none; border-radius: 7px;
+            font-size: 0.82em; font-weight: 700; cursor: pointer;
+            transition: background 0.15s;
+            display: flex; align-items: center; gap: 6px;
+        }
+        .btn-add:hover { background: #1d4ed8; }
+        .btn-add:disabled { background: var(--gray-400); cursor: not-allowed; }
+
+        /* ══ TABLE AREA ══ */
+        .table-wrap {
+            flex: 1; overflow: auto; padding: 16px 20px;
+        }
+
+        .tbl-container {
+            background: white;
+            border-radius: var(--radius);
+            border: 1px solid var(--gray-200);
+            box-shadow: var(--shadow-md);
+            overflow: hidden;
+        }
+
+        .compact-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.84em;
+        }
+
+        .compact-table thead th {
+            background: var(--navy);
+            color: rgba(255,255,255,0.88);
+            padding: 10px 12px;
+            text-align: left;
+            font-weight: 600;
+            font-size: 0.76em;
+            text-transform: uppercase;
+            letter-spacing: 0.6px;
+            white-space: nowrap;
+            position: sticky; top: 0; z-index: 10;
+        }
+
+        .compact-table thead th:first-child { border-radius: 0; padding-left: 16px; }
+
+        .compact-table tbody tr {
+            border-bottom: 1px solid var(--gray-100);
+            transition: background 0.1s;
+        }
+        .compact-table tbody tr:last-child { border-bottom: none; }
+        .compact-table tbody tr:hover { background: #f0f7ff; cursor: pointer; }
+        .compact-table tbody tr.selected-row { background: #dbeafe; }
+
+        .compact-table td {
+            padding: 8px 12px;
+            vertical-align: middle;
+        }
+        .compact-table td:first-child { padding-left: 16px; }
+
+        /* Row number */
+        .row-num {
+            width: 26px; height: 26px;
+            background: var(--gray-100); color: var(--gray-600);
+            border-radius: 5px; display: inline-flex;
+            align-items: center; justify-content: center;
+            font-size: 0.78em; font-weight: 700; flex-shrink: 0;
+        }
+
+        /* Date cell */
+        .date-cell { white-space: nowrap; font-weight: 600; color: var(--gray-800); }
+        .date-empty { color: var(--gray-400); font-style: italic; font-size: 0.88em; }
+
+        /* Captain cell */
+        .captain-cell { font-weight: 600; color: var(--navy); max-width: 130px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .captain-empty { color: var(--gray-400); font-style: italic; font-size: 0.88em; }
+
+        /* Chips inline */
+        .chips-inline {
+            display: flex; flex-wrap: nowrap; gap: 3px;
+            max-width: 180px; overflow: hidden;
+        }
+        .chip-tiny {
+            padding: 2px 5px;
+            border-radius: 3px;
+            font-size: 0.72em; font-weight: 700;
+            white-space: nowrap; flex-shrink: 0;
+        }
+        .chip-blue   { background: #dbeafe; color: #1d4ed8; }
+        .chip-amber  { background: #fef3c7; color: #b45309; }
+        .chip-green  { background: #dcfce7; color: #15803d; }
+        .chip-more   { background: var(--gray-100); color: var(--gray-600); }
+
+        /* Period cell */
+        .period-cell { white-space: nowrap; font-size: 0.82em; color: var(--gray-600); }
+        .period-days {
+            display: inline-flex; align-items: center;
+            padding: 2px 8px;
+            background: #dbeafe; color: #1d4ed8;
+            border-radius: 10px; font-weight: 700; font-size: 0.82em;
+        }
+        .period-none { color: var(--gray-400); font-style: italic; font-size: 0.82em; }
+
+        /* Actions */
+        .actions-cell { white-space: nowrap; text-align: right; }
+        .btn-edit {
+            padding: 4px 10px;
+            background: var(--blue); color: white;
+            border: none; border-radius: 5px;
+            font-size: 0.74em; font-weight: 700;
+            cursor: pointer; transition: background 0.13s; margin-right: 4px;
+        }
+        .btn-edit:hover { background: #1d4ed8; }
+        .btn-del {
+            padding: 4px 8px;
+            background: #fee2e2; color: var(--red);
+            border: 1px solid #fecaca;
+            border-radius: 5px; font-size: 0.74em; font-weight: 700;
+            cursor: pointer; transition: background 0.13s;
+        }
+        .btn-del:hover { background: #fecaca; }
+
+        /* Empty state */
+        .empty-placeholder {
+            text-align: center; padding: 60px 20px; color: var(--gray-400);
+        }
+        .empty-placeholder .ep-icon { font-size: 2.8em; margin-bottom: 10px; }
+        .empty-placeholder p { font-size: 0.9em; }
+        .empty-placeholder .ep-sub { font-size: 0.8em; margin-top: 4px; color: var(--gray-400); }
+
+        .no-territory {
+            flex: 1; display: flex; flex-direction: column;
+            align-items: center; justify-content: center;
+            color: var(--gray-400); text-align: center; gap: 12px;
+        }
+        .no-territory .nt-icon { font-size: 3.5em; opacity: 0.5; }
+        .no-territory p { font-size: 0.9em; }
+
+        /* ══ EDIT MODAL ══ */
+        .modal-overlay {
+            display: none; position: fixed; inset: 0;
+            background: rgba(10,22,40,0.72);
+            z-index: 1000;
+            justify-content: center; align-items: center;
+            backdrop-filter: blur(3px);
+        }
+        .modal-overlay.open { display: flex; }
+
+        .modal-box {
+            background: white; border-radius: 14px;
+            box-shadow: var(--shadow-xl);
+            width: 780px; max-width: 96vw; max-height: 92vh;
+            overflow-y: auto; display: flex; flex-direction: column;
+        }
+
+        .modal-hdr {
+            display: flex; align-items: center; justify-content: space-between;
+            padding: 18px 24px 14px;
+            border-bottom: 1px solid var(--gray-200);
+            position: sticky; top: 0; background: white; z-index: 5;
+            border-radius: 14px 14px 0 0;
+        }
+        .modal-hdr h3 { font-size: 1em; font-weight: 700; color: var(--gray-800); }
+        .modal-hdr-btns { display: flex; gap: 8px; }
+        .btn-save-modal {
+            padding: 7px 16px;
+            background: linear-gradient(135deg, var(--teal), #0f766e);
+            color: white; border: none; border-radius: 7px;
+            font-size: 0.82em; font-weight: 700; cursor: pointer;
+        }
+        .btn-save-modal:hover { filter: brightness(1.08); }
+        .btn-close-modal {
+            padding: 7px 12px;
+            background: var(--gray-100); color: var(--gray-600);
+            border: none; border-radius: 7px;
+            font-size: 0.82em; font-weight: 600; cursor: pointer;
+        }
+        .btn-close-modal:hover { background: var(--gray-200); }
+
+        .modal-body { padding: 20px 24px 24px; }
+
+        /* Form grid */
+        .f-row { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 14px; }
+        .f-row-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 14px; margin-bottom: 14px; }
+        .f-group { display: flex; flex-direction: column; gap: 5px; }
+        .f-label {
+            font-size: 0.72em; font-weight: 700; text-transform: uppercase;
+            letter-spacing: 0.5px; color: var(--gray-600);
+        }
+        .f-input {
+            padding: 8px 11px;
+            border: 1.5px solid var(--gray-200);
+            border-radius: 7px; font-size: 0.88em;
+            color: var(--gray-800); outline: none;
+            transition: border-color 0.15s; background: white; width: 100%;
+        }
+        .f-input:focus { border-color: var(--blue-light); box-shadow: 0 0 0 3px rgba(59,130,246,0.08); }
+        .f-calc {
+            padding: 8px 11px; border: 1.5px solid var(--gray-200);
+            border-radius: 7px; font-size: 0.88em; background: var(--gray-50);
+            color: var(--navy); font-weight: 700; min-height: 36px;
+            display: flex; align-items: center;
+        }
+
+        .section-title {
+            font-size: 0.72em; font-weight: 700; text-transform: uppercase;
+            letter-spacing: 0.7px; color: var(--gray-400);
+            margin: 16px 0 10px; display: flex; align-items: center; gap: 6px;
+        }
+        .section-title::after {
+            content: ''; flex: 1; height: 1px; background: var(--gray-200);
+        }
+
+        /* Letter grid */
+        .letter-grid {
+            display: flex; flex-wrap: wrap; gap: 4px;
+            max-height: 110px; overflow-y: auto; padding: 2px;
+        }
+        .lchip {
+            padding: 3px 7px;
+            border: 1.5px solid var(--gray-200);
+            border-radius: 4px; font-size: 0.75em; font-weight: 700;
+            cursor: pointer; transition: all 0.1s;
+            background: white; color: var(--gray-600); user-select: none;
+        }
+        .lchip:hover { border-color: var(--blue-light); color: var(--blue); background: #eff6ff; }
+        .lchip.sel-blue   { background: var(--blue);  border-color: var(--blue);  color: white; }
+        .lchip.sel-green  { background: var(--green); border-color: var(--green); color: white; }
+        .lchip.sel-amber  { background: var(--amber); border-color: var(--amber); color: white; }
+
+        .chip-acts { display: flex; gap: 6px; margin-bottom: 6px; }
+        .chip-act-btn {
+            padding: 3px 9px; border: 1px solid var(--gray-200);
+            border-radius: 4px; font-size: 0.68em; cursor: pointer;
+            background: white; color: var(--gray-600); font-weight: 600;
+        }
+        .chip-act-btn:hover { background: var(--gray-100); }
+
+        /* xFecha table in modal */
+        .xf-table {
+            width: 100%; border-collapse: collapse;
+            font-size: 0.83em; margin-top: 8px;
+        }
+        .xf-table th {
+            background: var(--navy); color: white;
+            padding: 7px 10px; font-weight: 600; font-size: 0.78em;
+            text-align: center;
+        }
+        .xf-table td {
+            padding: 6px 10px; border: 1px solid var(--gray-100);
+            text-align: center;
+        }
+        .xf-table tr:nth-child(even) td { background: var(--gray-50); }
+        .xf-input {
+            width: 64px; padding: 4px 6px;
+            border: 1.5px solid var(--gray-200); border-radius: 5px;
+            font-size: 0.88em; font-weight: 700; color: var(--blue);
+            text-align: center; outline: none;
+        }
+        .xf-input:focus { border-color: var(--blue-light); }
+
+        /* Toast */
+        .toast {
+            position: fixed; bottom: 22px; right: 22px;
+            background: var(--gray-800); color: white;
+            padding: 11px 18px; border-radius: 8px;
+            font-size: 0.85em; font-weight: 600;
+            box-shadow: var(--shadow-xl); z-index: 9999;
+            transform: translateY(60px); opacity: 0;
+            transition: all 0.28s ease;
+        }
+        .toast.show { transform: translateY(0); opacity: 1; }
+        .toast.ok  { border-left: 4px solid var(--teal); }
+        .toast.err { border-left: 4px solid var(--red); }
+
+        /* Summary bar */
+        .summary-bar {
+            display: flex; gap: 16px; align-items: center;
+            padding: 10px 20px;
+            background: white;
+            border-bottom: 1px solid var(--gray-200);
+            flex-shrink: 0;
+        }
+        .sum-stat {
+            display: flex; align-items: center; gap: 6px;
+            font-size: 0.78em; color: var(--gray-600);
+        }
+        .sum-stat strong { color: var(--gray-800); font-size: 1.1em; }
+        .sum-divider { width: 1px; height: 18px; background: var(--gray-200); }
+
+        @media (max-width: 860px) {
+            .sidebar { width: 60px; min-width: 60px; }
+            .terr-info, .terr-dot, .sidebar-search input, .brand-texts, .back-btn span { display: none; }
+            .sidebar-brand { justify-content: center; }
+            .terr-item { justify-content: center; }
+        }
+    </style>
+</head>
+<body>
+
+<!-- ═══ SIDEBAR ═══ -->
+<aside class="sidebar">
+    <div class="sidebar-brand">
+        <div class="brand-icon">🗃️</div>
+        <div class="brand-texts">
+            <div class="brand-title">Base de Datos</div>
+            <div class="brand-sub">Loncomilla</div>
+        </div>
+    </div>
+
+    <div class="sidebar-search">
+        <span class="s-icon">🔍</span>
+        <input type="text" id="searchInput" placeholder="Buscar territorio..." oninput="filtrarLista(this.value)">
+    </div>
+
+    <div class="terr-list" id="terrList"></div>
+
+    <div class="sidebar-footer">
+        <div id="clock">--:-- — ---</div>
+
+    </div>
+</aside>
+
+<!-- ═══ MAIN ═══ -->
+<div class="main" id="mainArea">
+    <div class="no-territory">
+        <div class="nt-icon">👈</div>
+        <p>Selecciona un territorio de la lista</p>
+        <p style="font-size:0.78em;color:#94a3b8">para ver y gestionar sus registros</p>
+    </div>
+</div>
+
+<!-- ═══ EDIT MODAL ═══ -->
+<div class="modal-overlay" id="editModal" onclick="handleOverlayClick(event)">
+    <div class="modal-box" onclick="event.stopPropagation()">
+        <div class="modal-hdr">
+            <h3 id="modalTitle">Registro</h3>
+            <div class="modal-hdr-btns">
+                <button class="btn-save-modal" onclick="guardarModal()">💾 Guardar</button>
+                <button class="btn-close-modal" onclick="cerrarModal()">✕ Cerrar</button>
+            </div>
+        </div>
+        <div class="modal-body" id="modalBody"></div>
+    </div>
+</div>
+
+<!-- ═══ TOAST ═══ -->
+<div class="toast" id="toast"></div>
+
+<script>
+// ═══════════════════════════════════════════════════
+// DATOS MAESTROS (idénticos al index.html)
+// ═══════════════════════════════════════════════════
+let territoriosData = {
+    1: { nombre: "Territorio 1", letras: [{ letra: "A", totalDias: 0, xFecha: 10 },{ letra: "B", totalDias: 0, xFecha: 10 },{ letra: "C", totalDias: 0, xFecha: 10 }], promedio: 24 },
+    2: { nombre: "Territorio 2", letras: [{ letra: "A", totalDias: 0, xFecha: 5 },{ letra: "B", totalDias: 0, xFecha: 6 },{ letra: "C", totalDias: 0, xFecha: 6 },{ letra: "D", totalDias: 0, xFecha: 6 },{ letra: "E", totalDias: 0, xFecha: 6 },{ letra: "F", totalDias: 0, xFecha: 5 },{ letra: "G", totalDias: 0, xFecha: 4 },{ letra: "H", totalDias: 0, xFecha: 4 },{ letra: "I", totalDias: 0, xFecha: 4 },{ letra: "J", totalDias: 0, xFecha: 3 },{ letra: "K", totalDias: 0, xFecha: 3 },{ letra: "L", totalDias: 0, xFecha: 3 },{ letra: "M", totalDias: 0, xFecha: 3 }], promedio: 21 },
+    3: { nombre: "Territorio 3", letras: [{ letra: "A", totalDias: 0, xFecha: 6 },{ letra: "B", totalDias: 0, xFecha: 6 },{ letra: "C", totalDias: 0, xFecha: 6 },{ letra: "D", totalDias: 0, xFecha: 6 },{ letra: "E", totalDias: 0, xFecha: 6 },{ letra: "F", totalDias: 0, xFecha: 6 },{ letra: "G", totalDias: 0, xFecha: 6 },{ letra: "H", totalDias: 0, xFecha: 6 },{ letra: "I", totalDias: 0, xFecha: 6 },{ letra: "J", totalDias: 0, xFecha: 6 },{ letra: "K", totalDias: 0, xFecha: 5 },{ letra: "L", totalDias: 0, xFecha: 5 },{ letra: "M", totalDias: 0, xFecha: 5 },{ letra: "N", totalDias: 0, xFecha: 5 }], promedio: 29 },
+    4: { nombre: "Territorio 4", letras: [{ letra: "A", totalDias: 0, xFecha: 4 },{ letra: "B", totalDias: 0, xFecha: 4 },{ letra: "C", totalDias: 0, xFecha: 4 },{ letra: "D", totalDias: 0, xFecha: 4 },{ letra: "E", totalDias: 0, xFecha: 4 }], promedio: 27 },
+    5: { nombre: "Territorio 5", letras: [{ letra: "A", totalDias: 0, xFecha: 4 },{ letra: "B", totalDias: 0, xFecha: 4 },{ letra: "C", totalDias: 0, xFecha: 4 },{ letra: "D", totalDias: 0, xFecha: 5 },{ letra: "E", totalDias: 0, xFecha: 6 }], promedio: 19 },
+    6: { nombre: "Territorio 6", letras: [{ letra: "A", totalDias: 0, xFecha: 7 },{ letra: "B", totalDias: 0, xFecha: 7 },{ letra: "C", totalDias: 0, xFecha: 6 },{ letra: "D", totalDias: 0, xFecha: 5 }], promedio: 29 },
+    7: { nombre: "Territorio 7", letras: [{ letra: "A", totalDias: 0, xFecha: 5 },{ letra: "B", totalDias: 0, xFecha: 4 },{ letra: "C", totalDias: 0, xFecha: 4 },{ letra: "D", totalDias: 0, xFecha: 4 },{ letra: "E", totalDias: 0, xFecha: 4 },{ letra: "F", totalDias: 0, xFecha: 4 }], promedio: 29 },
+    8: { nombre: "Territorio 8", letras: [{ letra: "A", totalDias: 0, xFecha: 4 },{ letra: "B", totalDias: 0, xFecha: 4 },{ letra: "C", totalDias: 0, xFecha: 4 },{ letra: "D", totalDias: 0, xFecha: 3 },{ letra: "E", totalDias: 0, xFecha: 3 },{ letra: "F", totalDias: 0, xFecha: 3 },{ letra: "G", totalDias: 0, xFecha: 3 }], promedio: 49 },
+    9: { nombre: "Territorio 9", letras: [{ letra: "A", totalDias: 0, xFecha: 6 },{ letra: "B", totalDias: 0, xFecha: 6 },{ letra: "C", totalDias: 0, xFecha: 4 },{ letra: "D", totalDias: 0, xFecha: 6 },{ letra: "E", totalDias: 0, xFecha: 6 },{ letra: "F", totalDias: 0, xFecha: 6 },{ letra: "G", totalDias: 0, xFecha: 6 },{ letra: "H", totalDias: 0, xFecha: 6 },{ letra: "I", totalDias: 0, xFecha: 5 }], promedio: 35 },
+    10: { nombre: "Territorio 10", letras: [{ letra: "A", totalDias: 0, xFecha: 4 },{ letra: "B", totalDias: 0, xFecha: 4 },{ letra: "C", totalDias: 0, xFecha: 4 },{ letra: "D", totalDias: 0, xFecha: 4 },{ letra: "E", totalDias: 0, xFecha: 4 },{ letra: "F", totalDias: 0, xFecha: 4 },{ letra: "G", totalDias: 0, xFecha: 4 }], promedio: 48 },
+    11: { nombre: "Territorio 11", letras: [{ letra: "A", totalDias: 0, xFecha: 4 },{ letra: "B", totalDias: 0, xFecha: 4 },{ letra: "C", totalDias: 0, xFecha: 4 },{ letra: "D", totalDias: 0, xFecha: 3 },{ letra: "E", totalDias: 0, xFecha: 4 },{ letra: "F", totalDias: 0, xFecha: 4 },{ letra: "G", totalDias: 0, xFecha: 4 },{ letra: "H", totalDias: 0, xFecha: 4 }], promedio: 45 },
+    12: { nombre: "Territorio 12", letras: [{ letra: "A", totalDias: 0, xFecha: 3 },{ letra: "B", totalDias: 0, xFecha: 3 },{ letra: "C", totalDias: 0, xFecha: 3 },{ letra: "D", totalDias: 0, xFecha: 3 },{ letra: "E", totalDias: 0, xFecha: 3 },{ letra: "F", totalDias: 0, xFecha: 3 },{ letra: "G", totalDias: 0, xFecha: 3 },{ letra: "H", totalDias: 0, xFecha: 3 }], promedio: 33 },
+    13: { nombre: "Territorio 13", letras: [{ letra: "A", totalDias: 0, xFecha: 3 },{ letra: "B", totalDias: 0, xFecha: 3 },{ letra: "C", totalDias: 0, xFecha: 3 },{ letra: "D", totalDias: 0, xFecha: 3 },{ letra: "E", totalDias: 0, xFecha: 3 },{ letra: "F", totalDias: 0, xFecha: 2 }], promedio: 25 },
+    14: { nombre: "Territorio 14", letras: [{ letra: "A", totalDias: 0, xFecha: 6 },{ letra: "B", totalDias: 0, xFecha: 6 },{ letra: "C", totalDias: 0, xFecha: 3 },{ letra: "D", totalDias: 0, xFecha: 6 },{ letra: "E", totalDias: 0, xFecha: 4 }], promedio: 33 },
+    15: { nombre: "Territorio 15", letras: [{ letra: "A", totalDias: 0, xFecha: 6 },{ letra: "B", totalDias: 0, xFecha: 6 },{ letra: "C", totalDias: 0, xFecha: 6 },{ letra: "D", totalDias: 0, xFecha: 5 },{ letra: "E", totalDias: 0, xFecha: 5 },{ letra: "F", totalDias: 0, xFecha: 4 },{ letra: "G", totalDias: 0, xFecha: 3 },{ letra: "H", totalDias: 0, xFecha: 3 },{ letra: "I", totalDias: 0, xFecha: 3 },{ letra: "J", totalDias: 0, xFecha: 3 },{ letra: "K", totalDias: 0, xFecha: 3 },{ letra: "L", totalDias: 0, xFecha: 3 },{ letra: "M", totalDias: 0, xFecha: 3 }], promedio: 29 },
+    16: { nombre: "Territorio 16", letras: [{ letra: "A", totalDias: 0, xFecha: 6 },{ letra: "B", totalDias: 0, xFecha: 6 },{ letra: "C", totalDias: 0, xFecha: 6 },{ letra: "D", totalDias: 0, xFecha: 6 },{ letra: "E", totalDias: 0, xFecha: 6 }], promedio: 36 },
+    17: { nombre: "Territorio 17", letras: [{ letra: "A", totalDias: 0, xFecha: 6 },{ letra: "B", totalDias: 0, xFecha: 6 },{ letra: "C", totalDias: 0, xFecha: 5 },{ letra: "D", totalDias: 0, xFecha: 5 },{ letra: "E", totalDias: 0, xFecha: 5 },{ letra: "F", totalDias: 0, xFecha: 5 },{ letra: "G", totalDias: 0, xFecha: 4 },{ letra: "H", totalDias: 0, xFecha: 4 },{ letra: "I", totalDias: 0, xFecha: 4 },{ letra: "J", totalDias: 0, xFecha: 4 },{ letra: "K", totalDias: 0, xFecha: 6 },{ letra: "L", totalDias: 0, xFecha: 6 },{ letra: "M", totalDias: 0, xFecha: 5 },{ letra: "N", totalDias: 0, xFecha: 5 },{ letra: "Ñ", totalDias: 0, xFecha: 6 },{ letra: "O", totalDias: 0, xFecha: 6 },{ letra: "P", totalDias: 0, xFecha: 6 },{ letra: "Q", totalDias: 0, xFecha: 5 }], promedio: 21 },
+    18: { nombre: "Territorio 18", letras: [{ letra: "A", totalDias: 0, xFecha: 5 },{ letra: "B", totalDias: 0, xFecha: 6 },{ letra: "C", totalDias: 0, xFecha: 6 },{ letra: "D", totalDias: 0, xFecha: 6 },{ letra: "E", totalDias: 0, xFecha: 6 },{ letra: "F", totalDias: 0, xFecha: 6 }], promedio: 26 },
+    19: { nombre: "Territorio 19", letras: [{ letra: "A", totalDias: 0, xFecha: 7 },{ letra: "B", totalDias: 0, xFecha: 7 },{ letra: "C", totalDias: 0, xFecha: 7 },{ letra: "D", totalDias: 0, xFecha: 7 },{ letra: "E", totalDias: 0, xFecha: 5 },{ letra: "F", totalDias: 0, xFecha: 5 }], promedio: 24 },
+    20: { nombre: "Territorio 20", letras: [{ letra: "A", totalDias: 0, xFecha: 5 },{ letra: "B", totalDias: 0, xFecha: 8 },{ letra: "C", totalDias: 0, xFecha: 8 },{ letra: "D", totalDias: 0, xFecha: 7 },{ letra: "E", totalDias: 0, xFecha: 7 },{ letra: "F", totalDias: 0, xFecha: 7 },{ letra: "G", totalDias: 0, xFecha: 7 },{ letra: "H", totalDias: 0, xFecha: 6 },{ letra: "I", totalDias: 0, xFecha: 6 },{ letra: "J", totalDias: 0, xFecha: 7 },{ letra: "K", totalDias: 0, xFecha: 7 },{ letra: "L", totalDias: 0, xFecha: 7 },{ letra: "M", totalDias: 0, xFecha: 7 },{ letra: "N", totalDias: 0, xFecha: 6 },{ letra: "O", totalDias: 0, xFecha: 6 },{ letra: "P", totalDias: 0, xFecha: 6 },{ letra: "Q", totalDias: 0, xFecha: 4 },{ letra: "R", totalDias: 0, xFecha: 4 }], promedio: 0 },
+    21: { nombre: "Territorio 21", letras: [{ letra: "A", totalDias: 0, xFecha: 4 },{ letra: "B", totalDias: 0, xFecha: 5 },{ letra: "C", totalDias: 0, xFecha: 3 },{ letra: "D", totalDias: 0, xFecha: 3 },{ letra: "E", totalDias: 0, xFecha: 3 },{ letra: "F", totalDias: 0, xFecha: 3 },{ letra: "G", totalDias: 0, xFecha: 4 },{ letra: "H", totalDias: 0, xFecha: 4 },{ letra: "I", totalDias: 0, xFecha: 4 },{ letra: "J", totalDias: 0, xFecha: 4 }], promedio: 37 },
+    22: { nombre: "Territorio 22", letras: [{ letra: "A", totalDias: 0, xFecha: 5 },{ letra: "B", totalDias: 0, xFecha: 5 },{ letra: "C", totalDias: 0, xFecha: 5 },{ letra: "D", totalDias: 0, xFecha: 5 },{ letra: "E", totalDias: 0, xFecha: 5 },{ letra: "F", totalDias: 0, xFecha: 5 },{ letra: "G", totalDias: 0, xFecha: 5 },{ letra: "H", totalDias: 0, xFecha: 5 },{ letra: "I", totalDias: 0, xFecha: 5 }], promedio: 32 },
+    23: { nombre: "Territorio 23", letras: [{ letra: "A", totalDias: 0, xFecha: 4 },{ letra: "B", totalDias: 0, xFecha: 4 },{ letra: "C", totalDias: 0, xFecha: 4 },{ letra: "D", totalDias: 0, xFecha: 4 },{ letra: "E", totalDias: 0, xFecha: 4 },{ letra: "F", totalDias: 0, xFecha: 4 }], promedio: 26 },
+    24: { nombre: "Territorio 24", letras: [{ letra: "A", totalDias: 0, xFecha: 5 },{ letra: "B", totalDias: 0, xFecha: 5 },{ letra: "C", totalDias: 0, xFecha: 5 },{ letra: "D", totalDias: 0, xFecha: 5 },{ letra: "E", totalDias: 0, xFecha: 5 },{ letra: "F", totalDias: 0, xFecha: 4 },{ letra: "G", totalDias: 0, xFecha: 4 }], promedio: 38 },
+    25: { nombre: "Territorio 25", letras: [{ letra: "A", totalDias: 0, xFecha: 3 },{ letra: "B", totalDias: 0, xFecha: 3 },{ letra: "C", totalDias: 0, xFecha: 3 },{ letra: "D", totalDias: 0, xFecha: 3 },{ letra: "E", totalDias: 0, xFecha: 3 },{ letra: "F", totalDias: 0, xFecha: 3 },{ letra: "G", totalDias: 0, xFecha: 3 },{ letra: "H", totalDias: 0, xFecha: 3 }], promedio: 31 },
+    26: { nombre: "Territorio 26", letras: [{ letra: "A", totalDias: 0, xFecha: 2 },{ letra: "B", totalDias: 0, xFecha: 2 },{ letra: "C", totalDias: 0, xFecha: 2 },{ letra: "D", totalDias: 0, xFecha: 2 },{ letra: "E", totalDias: 0, xFecha: 2 },{ letra: "F", totalDias: 0, xFecha: 2 },{ letra: "G", totalDias: 0, xFecha: 2 },{ letra: "H", totalDias: 0, xFecha: 2 },{ letra: "I", totalDias: 0, xFecha: 2 },{ letra: "J", totalDias: 0, xFecha: 4 },{ letra: "K", totalDias: 0, xFecha: 4 },{ letra: "L", totalDias: 0, xFecha: 3 },{ letra: "M", totalDias: 0, xFecha: 3 },{ letra: "N", totalDias: 0, xFecha: 3 },{ letra: "Ñ", totalDias: 0, xFecha: 2 },{ letra: "O", totalDias: 0, xFecha: 2 }], promedio: 21 },
+    27: { nombre: "Territorio 27", letras: [{ letra: "A", totalDias: 0, xFecha: 6 },{ letra: "B", totalDias: 0, xFecha: 6 },{ letra: "C", totalDias: 0, xFecha: 6 },{ letra: "D", totalDias: 0, xFecha: 6 },{ letra: "E", totalDias: 0, xFecha: 6 },{ letra: "F", totalDias: 0, xFecha: 6 },{ letra: "G", totalDias: 0, xFecha: 6 },{ letra: "H", totalDias: 0, xFecha: 6 },{ letra: "I", totalDias: 0, xFecha: 6 },{ letra: "J", totalDias: 0, xFecha: 6 },{ letra: "K", totalDias: 0, xFecha: 6 },{ letra: "L", totalDias: 0, xFecha: 6 },{ letra: "M", totalDias: 0, xFecha: 6 },{ letra: "N", totalDias: 0, xFecha: 6 },{ letra: "Ñ", totalDias: 0, xFecha: 4 },{ letra: "O", totalDias: 0, xFecha: 5 },{ letra: "P", totalDias: 0, xFecha: 4 },{ letra: "Q", totalDias: 0, xFecha: 5 },{ letra: "R", totalDias: 0, xFecha: 5 },{ letra: "S", totalDias: 0, xFecha: 5 },{ letra: "T", totalDias: 0, xFecha: 4 },{ letra: "U", totalDias: 0, xFecha: 5 },{ letra: "V", totalDias: 0, xFecha: 4 },{ letra: "W", totalDias: 0, xFecha: 4 },{ letra: "X", totalDias: 0, xFecha: 4 },{ letra: "Y", totalDias: 0, xFecha: 4 },{ letra: "Z", totalDias: 0, xFecha: 4 }], promedio: 21 },
+    28: { nombre: "Territorio 28", letras: [{ letra: "A", totalDias: 0, xFecha: 5 },{ letra: "B", totalDias: 0, xFecha: 3 },{ letra: "C", totalDias: 0, xFecha: 3 },{ letra: "D", totalDias: 0, xFecha: 3 },{ letra: "E", totalDias: 0, xFecha: 3 },{ letra: "F", totalDias: 0, xFecha: 3 },{ letra: "G", totalDias: 0, xFecha: 3 },{ letra: "H", totalDias: 0, xFecha: 2 },{ letra: "I", totalDias: 0, xFecha: 2 },{ letra: "J", totalDias: 0, xFecha: 1 },{ letra: "K", totalDias: 0, xFecha: 0 },{ letra: "L", totalDias: 0, xFecha: 0 },{ letra: "M", totalDias: 0, xFecha: 0 },{ letra: "N", totalDias: 0, xFecha: 0 },{ letra: "Ñ", totalDias: 0, xFecha: 0 },{ letra: "O", totalDias: 0, xFecha: 0 },{ letra: "P", totalDias: 0, xFecha: 0 },{ letra: "Q", totalDias: 0, xFecha: 0 },{ letra: "R", totalDias: 0, xFecha: 0 },{ letra: "S", totalDias: 0, xFecha: 0 },{ letra: "T", totalDias: 0, xFecha: 0 },{ letra: "U", totalDias: 0, xFecha: 0 },{ letra: "V", totalDias: 0, xFecha: 0 },{ letra: "W", totalDias: 0, xFecha: 0 },{ letra: "X", totalDias: 0, xFecha: 0 },{ letra: "Y", totalDias: 0, xFecha: 0 },{ letra: "Z", totalDias: 0, xFecha: 0 }], promedio: 37 },
+    29: { nombre: "Territorio 29", letras: [{ letra: "A", totalDias: 0, xFecha: 0 },{ letra: "B", totalDias: 0, xFecha: 0 },{ letra: "C", totalDias: 0, xFecha: 0 },{ letra: "D", totalDias: 0, xFecha: 0 },{ letra: "E", totalDias: 0, xFecha: 0 },{ letra: "F", totalDias: 0, xFecha: 0 },{ letra: "G", totalDias: 0, xFecha: 0 },{ letra: "H", totalDias: 0, xFecha: 11 },{ letra: "I", totalDias: 0, xFecha: 11 },{ letra: "J", totalDias: 0, xFecha: 11 },{ letra: "K", totalDias: 0, xFecha: 11 },{ letra: "L", totalDias: 0, xFecha: 11 },{ letra: "M", totalDias: 0, xFecha: 0 },{ letra: "N", totalDias: 0, xFecha: 0 },{ letra: "Ñ", totalDias: 0, xFecha: 0 },{ letra: "O", totalDias: 0, xFecha: 0 },{ letra: "P", totalDias: 0, xFecha: 0 },{ letra: "Q", totalDias: 0, xFecha: 0 },{ letra: "R", totalDias: 0, xFecha: 0 },{ letra: "S", totalDias: 0, xFecha: 0 },{ letra: "T", totalDias: 0, xFecha: 0 },{ letra: "U", totalDias: 0, xFecha: 0 },{ letra: "V", totalDias: 0, xFecha: 0 },{ letra: "W", totalDias: 0, xFecha: 0 },{ letra: "X", totalDias: 0, xFecha: 0 },{ letra: "Y", totalDias: 0, xFecha: 0 },{ letra: "Z", totalDias: 0, xFecha: 0 }], promedio: 28 },
+    30: { nombre: "Territorio 30", letras: [{ letra: "A", totalDias: 0, xFecha: 6 },{ letra: "B", totalDias: 0, xFecha: 6 },{ letra: "C", totalDias: 0, xFecha: 6 },{ letra: "D", totalDias: 0, xFecha: 5 },{ letra: "E", totalDias: 0, xFecha: 4 },{ letra: "F", totalDias: 0, xFecha: 4 },{ letra: "G", totalDias: 0, xFecha: 4 },{ letra: "H", totalDias: 0, xFecha: 4 },{ letra: "I", totalDias: 0, xFecha: 4 },{ letra: "J", totalDias: 0, xFecha: 4 },{ letra: "K", totalDias: 0, xFecha: 2 },{ letra: "L", totalDias: 0, xFecha: 0 },{ letra: "M", totalDias: 0, xFecha: 0 },{ letra: "N", totalDias: 0, xFecha: 0 },{ letra: "Ñ", totalDias: 0, xFecha: 0 },{ letra: "O", totalDias: 0, xFecha: 0 },{ letra: "P", totalDias: 0, xFecha: 0 },{ letra: "Q", totalDias: 0, xFecha: 0 },{ letra: "R", totalDias: 0, xFecha: 0 },{ letra: "S", totalDias: 0, xFecha: 0 },{ letra: "T", totalDias: 0, xFecha: 0 },{ letra: "U", totalDias: 0, xFecha: 0 },{ letra: "V", totalDias: 0, xFecha: 0 },{ letra: "W", totalDias: 0, xFecha: 0 },{ letra: "X", totalDias: 0, xFecha: 0 },{ letra: "Y", totalDias: 0, xFecha: 0 },{ letra: "Z", totalDias: 0, xFecha: 0 }], promedio: 0 },
+    31: { nombre: "Territorio 31", letras: [{ letra: "A", totalDias: 0, xFecha: 6 },{ letra: "B", totalDias: 0, xFecha: 5 }], promedio: 37 },
+    32: { nombre: "Territorio 32", letras: [{ letra: "A", totalDias: 0, xFecha: 4 },{ letra: "B", totalDias: 0, xFecha: 4 },{ letra: "C", totalDias: 0, xFecha: 4 }], promedio: 45 },
+    33: { nombre: "Territorio 33", letras: [{ letra: "A", totalDias: 0, xFecha: 8 },{ letra: "B", totalDias: 0, xFecha: 6 },{ letra: "C", totalDias: 0, xFecha: 5 },{ letra: "D", totalDias: 0, xFecha: 5 },{ letra: "E", totalDias: 0, xFecha: 5 },{ letra: "F", totalDias: 0, xFecha: 6 }], promedio: 18 },
+    34: { nombre: "Territorio 34", letras: [{ letra: "A", totalDias: 0, xFecha: 8 },{ letra: "B", totalDias: 0, xFecha: 7 },{ letra: "C", totalDias: 0, xFecha: 7 },{ letra: "D", totalDias: 0, xFecha: 7 },{ letra: "E", totalDias: 0, xFecha: 7 },{ letra: "F", totalDias: 0, xFecha: 7 },{ letra: "G", totalDias: 0, xFecha: 7 },{ letra: "H", totalDias: 0, xFecha: 7 },{ letra: "I", totalDias: 0, xFecha: 7 },{ letra: "J", totalDias: 0, xFecha: 7 },{ letra: "K", totalDias: 0, xFecha: 7 },{ letra: "L", totalDias: 0, xFecha: 7 },{ letra: "M", totalDias: 0, xFecha: 7 },{ letra: "N", totalDias: 0, xFecha: 7 },{ letra: "Ñ", totalDias: 0, xFecha: 7 },{ letra: "O", totalDias: 0, xFecha: 7 },{ letra: "P", totalDias: 0, xFecha: 7 },{ letra: "Q", totalDias: 0, xFecha: 8 },{ letra: "R", totalDias: 0, xFecha: 7 },{ letra: "S", totalDias: 0, xFecha: 7 },{ letra: "T", totalDias: 0, xFecha: 6 },{ letra: "U", totalDias: 0, xFecha: 6 },{ letra: "V", totalDias: 0, xFecha: 6 },{ letra: "W", totalDias: 0, xFecha: 6 },{ letra: "X", totalDias: 0, xFecha: 6 },{ letra: "Y", totalDias: 0, xFecha: 6 },{ letra: "Z", totalDias: 0, xFecha: 6 }], promedio: 14 },
+    35: { nombre: "Territorio 35", letras: [{ letra: "A", totalDias: 0, xFecha: 5 },{ letra: "B", totalDias: 0, xFecha: 7 },{ letra: "C", totalDias: 0, xFecha: 7 },{ letra: "D", totalDias: 0, xFecha: 5 },{ letra: "E", totalDias: 0, xFecha: 5 }], promedio: 25 },
+    36: { nombre: "Territorio 36", letras: [{ letra: "A", totalDias: 0, xFecha: 7 },{ letra: "B", totalDias: 0, xFecha: 6 },{ letra: "C", totalDias: 0, xFecha: 4 },{ letra: "D", totalDias: 0, xFecha: 4 },{ letra: "E", totalDias: 0, xFecha: 4 },{ letra: "F", totalDias: 0, xFecha: 4 },{ letra: "G", totalDias: 0, xFecha: 4 }], promedio: 24 },
+    37: { nombre: "Territorio 37", letras: [{ letra: "A", totalDias: 0, xFecha: 7 },{ letra: "B", totalDias: 0, xFecha: 8 },{ letra: "C", totalDias: 0, xFecha: 8 },{ letra: "D", totalDias: 0, xFecha: 8 },{ letra: "E", totalDias: 0, xFecha: 8 },{ letra: "F", totalDias: 0, xFecha: 7 },{ letra: "G", totalDias: 0, xFecha: 8 },{ letra: "H", totalDias: 0, xFecha: 8 },{ letra: "I", totalDias: 0, xFecha: 8 },{ letra: "J", totalDias: 0, xFecha: 8 },{ letra: "K", totalDias: 0, xFecha: 7 },{ letra: "L", totalDias: 0, xFecha: 6 },{ letra: "M", totalDias: 0, xFecha: 6 },{ letra: "N", totalDias: 0, xFecha: 6 }], promedio: 19 },
+    38: { nombre: "Territorio 38", letras: [{ letra: "A", totalDias: 0, xFecha: 5 },{ letra: "B", totalDias: 0, xFecha: 5 },{ letra: "C", totalDias: 0, xFecha: 6 },{ letra: "D", totalDias: 0, xFecha: 4 },{ letra: "E", totalDias: 0, xFecha: 8 },{ letra: "F", totalDias: 0, xFecha: 7 }], promedio: 15 },
+    39: { nombre: "Territorio 39", letras: [{ letra: "A", totalDias: 0, xFecha: 5 },{ letra: "B", totalDias: 0, xFecha: 3 },{ letra: "C", totalDias: 0, xFecha: 3 },{ letra: "D", totalDias: 0, xFecha: 4 },{ letra: "E", totalDias: 0, xFecha: 3 },{ letra: "F", totalDias: 0, xFecha: 2 }], promedio: 29 },
+    40: { nombre: "Territorio 40", letras: [{ letra: "A", totalDias: 0, xFecha: 7 },{ letra: "B", totalDias: 0, xFecha: 3 }], promedio: 25 },
+    41: { nombre: "Territorio 41", letras: [{ letra: "A", totalDias: 0, xFecha: 7 },{ letra: "B", totalDias: 0, xFecha: 6 }], promedio: 23 }
+};
+
+const STORAGE_KEY     = 'bd_territoriosData';
+const DB_STORAGE_KEY  = 'bd_registros';
+const TODAS_LAS_LETRAS = ['A','B','C','D','E','F','G','H','I','J','K','L','M','N','Ñ','O','P','Q','R','S','T','U','V','W','X','Y','Z'];
+const COLORS = ['#2563eb','#7c3aed','#0d9488','#d97706','#dc2626','#16a34a','#0891b2','#c026d3'];
+
+let baseDatosRegistros = {};
+let activeTerr = null;
+let editState = { terrId: null, idx: null };   // current modal state
+
+// ═══════════════════════════════════════════════════
+// STORAGE
+// ═══════════════════════════════════════════════════
+function loadAll() {
+    try {
+        const raw = localStorage.getItem(STORAGE_KEY);
+        if (raw) { const p = JSON.parse(raw); if (p && typeof p === 'object') territoriosData = p; }
+    } catch(e) {}
+    try {
+        const raw = localStorage.getItem(DB_STORAGE_KEY);
+        if (raw) baseDatosRegistros = JSON.parse(raw) || {};
+    } catch(e) {}
+}
+
+function saveDB() {
+    try { localStorage.setItem(DB_STORAGE_KEY, JSON.stringify(baseDatosRegistros)); } catch(e) {}
+}
+
+// ═══════════════════════════════════════════════════
+// SIDEBAR
+// ═══════════════════════════════════════════════════
+function renderSidebar(filtro = '') {
+    const list = document.getElementById('terrList');
+    list.innerHTML = '';
+    for (let i = 1; i <= 41; i++) {
+        const t = territoriosData[i];
+        const nombre = t ? t.nombre : `Territorio ${i}`;
+        if (filtro && !nombre.toLowerCase().includes(filtro.toLowerCase()) && !String(i).includes(filtro)) continue;
+        const regs = (baseDatosRegistros[i] || []).length;
+        const color = COLORS[(i-1) % COLORS.length];
+        const btn = document.createElement('button');
+        btn.className = 'terr-item' + (activeTerr === i ? ' active' : '');
+        btn.innerHTML = `
+            <div class="terr-num" style="background:${color}22;color:${color}">${i}</div>
+            <div class="terr-info">
+                <div class="t-name">${nombre}</div>
+                <div class="t-count">${regs} registro${regs !== 1 ? 's' : ''}</div>
+            </div>
+            <div class="terr-dot" style="background:${regs > 0 ? '#4ade80' : 'rgba(255,255,255,0.18)'}"></div>`;
+        btn.onclick = () => seleccionarTerritorio(i);
+        list.appendChild(btn);
+    }
+}
+
+function filtrarLista(val) { renderSidebar(val); }
+
+// ═══════════════════════════════════════════════════
+// MAIN VIEW
+// ═══════════════════════════════════════════════════
+function seleccionarTerritorio(id) {
+    activeTerr = id;
+    renderSidebar(document.getElementById('searchInput').value);
+    renderMain(id);
+}
+
+function renderMain(terrId) {
+    const t = territoriosData[terrId];
+    const nombre = t ? t.nombre : `Territorio ${terrId}`;
+    const registros = baseDatosRegistros[terrId] || [];
+    const totalDias = registros.reduce((s, r) => s + calcDias(r.fechaInicio, r.fechaFin), 0);
+    const totalLetras = registros.reduce((s, r) => s + (r.letrasTrabajadasArr || []).length, 0);
+
+    const main = document.getElementById('mainArea');
+    main.innerHTML = `
+        <div class="main-hdr">
+            <div class="main-hdr-left">
+                <h2>T.${terrId} — ${nombre}</h2>
+                <p>Registros de seguimiento del territorio</p>
+            </div>
+            <div class="hdr-actions">
+                <button class="btn-add" onclick="nuevoRegistro(${terrId})">＋ Nuevo Registro</button>
+            </div>
+        </div>
+        <div class="summary-bar">
+            <div class="sum-stat"><span>📋</span><strong>${registros.length}</strong> registros</div>
+            <div class="sum-divider"></div>
+            <div class="sum-stat"><span>🔤</span><strong>${totalLetras}</strong> letras trabajadas</div>
+            <div class="sum-divider"></div>
+            <div class="sum-stat"><span>📅</span><strong>${totalDias}</strong> días totales</div>
+        </div>
+        <div class="table-wrap">
+            ${registros.length === 0
+                ? `<div class="empty-placeholder">
+                       <div class="ep-icon">📂</div>
+                       <p>Este territorio no tiene registros aún</p>
+                       <p class="ep-sub">Haz clic en "Nuevo Registro" para agregar el primero</p>
+                   </div>`
+                : `<div class="tbl-container">
+                       <table class="compact-table">
+                           <thead>
+                               <tr>
+                                   <th style="width:40px">#</th>
+                                   <th style="width:96px">Fecha</th>
+                                   <th style="width:130px">Capitán</th>
+                                   <th>Proyectadas</th>
+                                   <th>Faltantes</th>
+                                   <th>Trabajadas</th>
+                                   <th style="width:170px">Período</th>
+                                   <th style="width:72px">Días</th>
+                                   <th style="width:90px">Acciones</th>
+                               </tr>
+                           </thead>
+                           <tbody>
+                               ${registros.map((r, idx) => renderFila(terrId, idx, r)).join('')}
+                           </tbody>
+                       </table>
+                   </div>`
+            }
+        </div>`;
+}
+
+function renderFila(terrId, idx, r) {
+    const dias = calcDias(r.fechaInicio, r.fechaFin);
+    const proj  = r.letrasProyectadas  || [];
+    const falt  = r.letrasFaltantes    || [];
+    const trab  = r.letrasTrabajadasArr || [];
+    const MAX = 6;
+
+    function chipsHtml(arr, cls) {
+        if (!arr.length) return '<span style="color:#94a3b8;font-size:0.78em">—</span>';
+        const visible = arr.slice(0, MAX);
+        const extra   = arr.length - MAX;
+        return `<div class="chips-inline">
+            ${visible.map(l => `<span class="chip-tiny ${cls}">${l}</span>`).join('')}
+            ${extra > 0 ? `<span class="chip-tiny chip-more">+${extra}</span>` : ''}
+        </div>`;
+    }
+
+    const periodoHtml = r.fechaInicio && r.fechaFin
+        ? `<span class="period-cell">${fmtDate(r.fechaInicio)} → ${fmtDate(r.fechaFin)}</span>`
+        : '<span class="period-none">Sin período</span>';
+
+    const diasHtml = dias > 0
+        ? `<span class="period-days">${dias}d</span>`
+        : '<span class="period-none">—</span>';
+
+    const title = r.nombreCapitan
+        ? `${r.fecha || 'Sin fecha'} — ${r.nombreCapitan}`
+        : (r.fecha || `Registro ${idx + 1}`);
+
+    return `<tr onclick="abrirModal(${terrId},${idx})" title="${title}">
+        <td><span class="row-num">${idx + 1}</span></td>
+        <td>${r.fecha ? `<span class="date-cell">${fmtDate(r.fecha)}</span>` : '<span class="date-empty">Sin fecha</span>'}</td>
+        <td>${r.nombreCapitan ? `<span class="captain-cell" title="${r.nombreCapitan}">${r.nombreCapitan}</span>` : '<span class="captain-empty">Sin capitán</span>'}</td>
+        <td>${chipsHtml(proj, 'chip-blue')}</td>
+        <td>${chipsHtml(falt, 'chip-amber')}</td>
+        <td>${chipsHtml(trab, 'chip-green')}</td>
+        <td>${periodoHtml}</td>
+        <td>${diasHtml}</td>
+        <td class="actions-cell" onclick="event.stopPropagation()">
+            <button class="btn-edit" onclick="abrirModal(${terrId},${idx})">✏️</button>
+            <button class="btn-del"  onclick="eliminarReg(${terrId},${idx})">🗑️</button>
+        </td>
+    </tr>`;
+}
+
+// ═══════════════════════════════════════════════════
+// CRUD
+// ═══════════════════════════════════════════════════
+function nuevoRegistro(terrId) {
+    if (!baseDatosRegistros[terrId]) baseDatosRegistros[terrId] = [];
+    baseDatosRegistros[terrId].push({
+        fecha:'', nombreCapitan:'',
+        letrasProyectadas:[], letrasFaltantes:[], letrasTrabajadasArr:[],
+        fechaInicio:'', fechaFin:'', xFechaMap:{}
+    });
+    const idx = baseDatosRegistros[terrId].length - 1;
+    saveDB();
+    renderMain(terrId);
+    renderSidebar(document.getElementById('searchInput').value);
+    abrirModal(terrId, idx);
+}
+
+function eliminarReg(terrId, idx) {
+    if (!confirm('¿Eliminar este registro?')) return;
+    baseDatosRegistros[terrId].splice(idx, 1);
+    saveDB();
+    renderMain(terrId);
+    renderSidebar(document.getElementById('searchInput').value);
+    toast('🗑️ Registro eliminado', 'ok');
+}
+
+// ═══════════════════════════════════════════════════
+// MODAL EDIT
+// ═══════════════════════════════════════════════════
+function abrirModal(terrId, idx) {
+    editState = { terrId, idx };
+    const reg = baseDatosRegistros[terrId][idx];
+    const t   = territoriosData[terrId];
+    document.getElementById('modalTitle').textContent =
+        `✏️ T.${terrId} — Registro ${idx + 1}${reg.nombreCapitan ? ' · ' + reg.nombreCapitan : ''}`;
+    renderModalBody(terrId, idx, reg, t);
+    document.getElementById('editModal').classList.add('open');
+}
+
+function renderModalBody(terrId, idx, reg, t) {
+    const fi = reg.fechaInicio || '';
+    const ff = reg.fechaFin    || '';
+    const dias = calcDias(fi, ff);
+    const proj = reg.letrasProyectadas   || [];
+    const falt = reg.letrasFaltantes     || [];
+    const trab = reg.letrasTrabajadasArr || [];
+    const xfm  = reg.xFechaMap           || {};
+    const periodoStr = fi && ff ? `${fmtDate(ff)} — ${fmtDate(fi)}` : '— — —';
+
+    const xfRows = trab.map(l => {
+        const def = t ? ((t.letras.find(x => x.letra === l) || {}).xFecha || 0) : 0;
+        const val = xfm[l] !== undefined ? xfm[l] : def;
+        return `<tr>
+            <td><strong style="color:#0f2444">${l}</strong></td>
+            <td style="color:#64748b;font-size:0.82em">${periodoStr}</td>
+            <td><input class="xf-input" type="number" min="0" value="${val}"
+                oninput="editXFecha('${l}',this.value)"></td>
+            <td style="font-weight:700;color:#2563eb">${dias > 0 ? dias + 'd' : '—'}</td>
+        </tr>`;
+    }).join('');
+
+    document.getElementById('modalBody').innerHTML = `
+        <!-- Info General -->
+        <div class="section-title">📅 Información General</div>
+        <div class="f-row">
+            <div class="f-group">
+                <label class="f-label">Fecha</label>
+                <input type="date" class="f-input" id="mFecha" value="${reg.fecha || ''}"
+                    oninput="editField('fecha',this.value)">
+            </div>
+            <div class="f-group">
+                <label class="f-label">Nombre del Capitán</label>
+                <input type="text" class="f-input" id="mCapitan" placeholder="Ej: Juan Pérez"
+                    value="${reg.nombreCapitan || ''}" oninput="editField('nombreCapitan',this.value)">
+            </div>
+        </div>
+
+        <!-- Letras -->
+        <div class="section-title">🔤 Letras</div>
+        <div class="f-row-3">
+            <div class="f-group">
+                <label class="f-label" style="color:#1d4ed8">Proyectadas</label>
+                <div class="chip-acts">
+                    <button class="chip-act-btn" onclick="selTodas('Proyectadas')">Todas</button>
+                    <button class="chip-act-btn" onclick="limpiarSel('Proyectadas')">Limpiar</button>
+                </div>
+                <div class="letter-grid" id="lgProyectadas">
+                    ${TODAS_LAS_LETRAS.map(l => `<span class="lchip ${proj.includes(l) ? 'sel-blue' : ''}"
+                        onclick="toggleLetra('Proyectadas','${l}',this)">${l}</span>`).join('')}
+                </div>
+            </div>
+            <div class="f-group">
+                <label class="f-label" style="color:#b45309">Faltantes</label>
+                <div class="chip-acts">
+                    <button class="chip-act-btn" onclick="selTodas('Faltantes')">Todas</button>
+                    <button class="chip-act-btn" onclick="limpiarSel('Faltantes')">Limpiar</button>
+                </div>
+                <div class="letter-grid" id="lgFaltantes">
+                    ${TODAS_LAS_LETRAS.map(l => `<span class="lchip ${falt.includes(l) ? 'sel-amber' : ''}"
+                        onclick="toggleLetra('Faltantes','${l}',this)">${l}</span>`).join('')}
+                </div>
+            </div>
+            <div class="f-group">
+                <label class="f-label" style="color:#15803d">Trabajadas</label>
+                <div class="chip-acts">
+                    <button class="chip-act-btn" onclick="selTodas('Trabajadas')">Todas</button>
+                    <button class="chip-act-btn" onclick="limpiarSel('Trabajadas')">Limpiar</button>
+                </div>
+                <div class="letter-grid" id="lgTrabajadas">
+                    ${TODAS_LAS_LETRAS.map(l => `<span class="lchip ${trab.includes(l) ? 'sel-green' : ''}"
+                        onclick="toggleLetra('Trabajadas','${l}',this)">${l}</span>`).join('')}
+                </div>
+            </div>
+        </div>
+
+        <!-- Período -->
+        <div class="section-title">📆 Período</div>
+        <div class="f-row">
+            <div class="f-group">
+                <label class="f-label">Fecha Inicio</label>
+                <input type="date" class="f-input" id="mFI" value="${fi}"
+                    oninput="editPeriod('fechaInicio',this.value)">
+            </div>
+            <div class="f-group">
+                <label class="f-label">Fecha Fin</label>
+                <input type="date" class="f-input" id="mFF" value="${ff}"
+                    oninput="editPeriod('fechaFin',this.value)">
+            </div>
+        </div>
+        <div class="f-group" style="margin-bottom:14px">
+            <label class="f-label">Total Días calculado</label>
+            <div class="f-calc" id="mCalcDias">
+                ${dias > 0
+                    ? `<strong style="color:#2563eb;font-size:1.1em">${dias}</strong>&nbsp;<span style="color:#475569;font-weight:500">días</span>`
+                    : '<span style="color:#94a3b8">Selecciona el período</span>'}
+            </div>
+        </div>
+
+        <!-- Letras x Fecha -->
+        <div class="section-title" style="color:#1d4ed8">🔢 Letras × Fecha</div>
+        <div id="mXFecha">
+        ${trab.length === 0
+            ? `<p style="color:#94a3b8;font-size:0.82em;padding:10px 0">Selecciona Letras Trabajadas para habilitar</p>`
+            : `<table class="xf-table">
+                <thead><tr><th>Letra</th><th>Período</th><th>× Fecha</th><th>Días</th></tr></thead>
+                <tbody>${xfRows}</tbody>
+               </table>`
+        }
+        </div>`;
+}
+
+// Modal helpers
+function getReg() {
+    return baseDatosRegistros[editState.terrId][editState.idx];
+}
+
+function editField(campo, val) {
+    getReg()[campo] = val;
+    // update modal title live
+    const reg = getReg();
+    if (campo === 'nombreCapitan' || campo === 'fecha') {
+        document.getElementById('modalTitle').textContent =
+            `✏️ T.${editState.terrId} — Registro ${editState.idx + 1}${reg.nombreCapitan ? ' · ' + reg.nombreCapitan : ''}`;
+    }
+}
+
+function editPeriod(campo, val) {
+    const reg = getReg();
+    reg[campo] = val;
+    const dias = calcDias(reg.fechaInicio || '', reg.fechaFin || '');
+    const el = document.getElementById('mCalcDias');
+    if (el) el.innerHTML = dias > 0
+        ? `<strong style="color:#2563eb;font-size:1.1em">${dias}</strong>&nbsp;<span style="color:#475569;font-weight:500">días</span>`
+        : '<span style="color:#94a3b8">Selecciona el período</span>';
+    // Re-render xFecha table
+    if ((reg.letrasTrabajadasArr || []).length > 0) refreshXFecha();
+}
+
+function editXFecha(letra, val) {
+    const reg = getReg();
+    if (!reg.xFechaMap) reg.xFechaMap = {};
+    reg.xFechaMap[letra] = parseInt(val, 10) || 0;
+}
+
+function toggleLetra(tipo, letra, el) {
+    const reg = getReg();
+    const map = { Proyectadas: 'letrasProyectadas', Faltantes: 'letrasFaltantes', Trabajadas: 'letrasTrabajadasArr' };
+    const cls = { Proyectadas: 'sel-blue', Faltantes: 'sel-amber', Trabajadas: 'sel-green' };
+    const key = map[tipo];
+    if (!reg[key]) reg[key] = [];
+    if (reg[key].includes(letra)) {
+        reg[key] = reg[key].filter(l => l !== letra);
+        el.classList.remove(cls[tipo]);
+    } else {
+        reg[key].push(letra);
+        el.classList.add(cls[tipo]);
+        if (tipo === 'Trabajadas') {
+            if (!reg.xFechaMap) reg.xFechaMap = {};
+            if (reg.xFechaMap[letra] === undefined) {
+                const t = territoriosData[editState.terrId];
+                reg.xFechaMap[letra] = t ? ((t.letras.find(x => x.letra === letra) || {}).xFecha || 0) : 0;
+            }
+        }
+    }
+    if (tipo === 'Trabajadas') refreshXFecha();
+}
+
+function selTodas(tipo) {
+    const reg = getReg();
+    const map = { Proyectadas: 'letrasProyectadas', Faltantes: 'letrasFaltantes', Trabajadas: 'letrasTrabajadasArr' };
+    const cls = { Proyectadas: 'sel-blue', Faltantes: 'sel-amber', Trabajadas: 'sel-green' };
+    reg[map[tipo]] = [...TODAS_LAS_LETRAS];
+    document.querySelectorAll(`#lg${tipo} .lchip`).forEach(c => { c.classList.remove('sel-blue','sel-amber','sel-green'); c.classList.add(cls[tipo]); });
+    if (tipo === 'Trabajadas') refreshXFecha();
+}
+
+function limpiarSel(tipo) {
+    const reg = getReg();
+    const map = { Proyectadas: 'letrasProyectadas', Faltantes: 'letrasFaltantes', Trabajadas: 'letrasTrabajadasArr' };
+    reg[map[tipo]] = [];
+    document.querySelectorAll(`#lg${tipo} .lchip`).forEach(c => c.classList.remove('sel-blue','sel-amber','sel-green'));
+    if (tipo === 'Trabajadas') refreshXFecha();
+}
+
+function refreshXFecha() {
+    const reg = getReg();
+    const trab = reg.letrasTrabajadasArr || [];
+    const xfm  = reg.xFechaMap || {};
+    const t    = territoriosData[editState.terrId];
+    const dias = calcDias(reg.fechaInicio || '', reg.fechaFin || '');
+    const fi   = reg.fechaInicio || '', ff = reg.fechaFin || '';
+    const periodoStr = fi && ff ? `${fmtDate(ff)} — ${fmtDate(fi)}` : '— — —';
+
+    const xfRows = trab.map(l => {
+        const def = t ? ((t.letras.find(x => x.letra === l) || {}).xFecha || 0) : 0;
+        const val = xfm[l] !== undefined ? xfm[l] : def;
+        return `<tr>
+            <td><strong style="color:#0f2444">${l}</strong></td>
+            <td style="color:#64748b;font-size:0.82em">${periodoStr}</td>
+            <td><input class="xf-input" type="number" min="0" value="${val}"
+                oninput="editXFecha('${l}',this.value)"></td>
+            <td style="font-weight:700;color:#2563eb">${dias > 0 ? dias + 'd' : '—'}</td>
+        </tr>`;
+    }).join('');
+
+    const el = document.getElementById('mXFecha');
+    if (!el) return;
+    el.innerHTML = trab.length === 0
+        ? `<p style="color:#94a3b8;font-size:0.82em;padding:10px 0">Selecciona Letras Trabajadas para habilitar</p>`
+        : `<table class="xf-table">
+               <thead><tr><th>Letra</th><th>Período</th><th>× Fecha</th><th>Días</th></tr></thead>
+               <tbody>${xfRows}</tbody>
+           </table>`;
+}
+
+function guardarModal() {
+    saveDB();
+    cerrarModal();
+    if (activeTerr !== null) renderMain(activeTerr);
+    renderSidebar(document.getElementById('searchInput').value);
+    toast('✅ Registro guardado', 'ok');
+}
+
+function cerrarModal() {
+    document.getElementById('editModal').classList.remove('open');
+}
+
+function handleOverlayClick(e) {
+    if (e.target === document.getElementById('editModal')) cerrarModal();
+}
+
+// ═══════════════════════════════════════════════════
+// UTILS
+// ═══════════════════════════════════════════════════
+function calcDias(fi, ff) {
+    if (!fi || !ff) return 0;
+    const d1 = new Date(fi), d2 = new Date(ff);
+    if (isNaN(d1) || isNaN(d2) || d2 < d1) return 0;
+    return Math.round((d2 - d1) / 86400000);
+}
+
+function fmtDate(d) {
+    if (!d) return '—';
+    const [y, m, day] = d.split('-');
+    if (!y) return d;
+    const meses = ['ene','feb','mar','abr','may','jun','jul','ago','sep','oct','nov','dic'];
+    return `${parseInt(day)} ${meses[parseInt(m)-1]} ${y.slice(2)}`;
+}
+
+function toast(msg, type = 'ok') {
+    const t = document.getElementById('toast');
+    t.textContent = msg;
+    t.className = `toast ${type} show`;
+    setTimeout(() => t.classList.remove('show'), 2800);
+}
+
+// ═══════════════════════════════════════════════════
+// CLOCK
+// ═══════════════════════════════════════════════════
+function startClock() {
+    const el = document.getElementById('clock');
+    if (!el) return;
+    function fmt() {
+        const now = new Date();
+        const h = now.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' });
+        const d = now.toLocaleDateString('es-ES', { day: 'numeric', month: 'short' });
+        el.textContent = `🕐 ${h} — ${d}`;
+    }
+    fmt(); setInterval(fmt, 1000);
+}
+
+// ═══════════════════════════════════════════════════
+// INIT
+// ═══════════════════════════════════════════════════
+document.addEventListener('DOMContentLoaded', () => {
+    loadAll();
+    renderSidebar();
+    startClock();
+});
+</script>
+</body>
+</html>
